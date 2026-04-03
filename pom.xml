@@ -4,21 +4,45 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example.flink</groupId>
+    <groupId>io.github.beryllw</groupId>
     <artifactId>dingtalk-flink-connector</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Flink DingTalk Sink Connector</name>
+    <description>A Flink Sink Connector that sends stream data as DingTalk messages via Webhook or Enterprise API</description>
+    <url>https://github.com/beryllw/dingtalk-flink-connector</url>
+
+    <developers>
+        <developer>
+            <id>beryllw</id>
+            <name>beryllw</name>
+            <url>https://github.com/beryllw</url>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/beryllw/dingtalk-flink-connector.git</connection>
+        <developerConnection>scm:git:git@github.com:beryllw/dingtalk-flink-connector.git</developerConnection>
+        <url>https://github.com/beryllw/dingtalk-flink-connector</url>
+    </scm>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <flink.version>1.18.0</flink.version>
+        <flink.version>2.2.0</flink.version>
+        <scala.binary.version>2.12</scala.binary.version>
         <jackson.version>2.15.3</jackson.version>
         <slf4j.version>1.7.36</slf4j.version>
-        <shade.prefix>com.example.flink.connector.dingtalk.shaded</shade.prefix>
+        <shade.prefix>io.github.beryllw.dingtalk.shaded</shade.prefix>
     </properties>
 
     <dependencies>
@@ -71,9 +95,9 @@
 
         <!-- Test Dependencies -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.9.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -82,10 +106,41 @@
             <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Test-only Flink dependencies -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-runtime</artifactId>
+            <version>${flink.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-test-utils</artifactId>
+            <version>${flink.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-datagen</artifactId>
+            <version>${flink.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>

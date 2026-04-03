@@ -10,7 +10,7 @@ A Flink SQL / DataStream Sink Connector that sends stream data as DingTalk messa
 
 ### Features
 
-- **SinkV2 API** - Compatible with Flink 1.18+
+- **SinkV2 API** - Compatible with Flink 2.2.0+
 - **Dual Mode** - Webhook or Enterprise API
 - **SQL Support** - `CREATE TABLE ... WITH ('connector' = 'dingtalk')`
 - **Message Types** - text, markdown, actionCard, link
@@ -72,7 +72,7 @@ DingTalkSink<String> sink = DingTalkSink.<String>builder()
         .setMessageType(MessageType.TEXT)
         .build();
 
-stream.addSink(sink);
+stream.sinkTo(sink);
 ```
 
 ### Configuration Options
@@ -129,7 +129,7 @@ Flink SQL / DataStream Sink 连接器，将流数据作为钉钉消息发送。�
 
 ### 特性
 
-- **SinkV2 API** - 兼容 Flink 1.18+
+- **SinkV2 API** - 兼容 Flink 2.2.0+
 - **双模式** - Webhook 或企业 API
 - **SQL 支持** - `CREATE TABLE ... WITH ('connector' = 'dingtalk')`
 - **消息类型** - text、markdown、actionCard、link
@@ -190,7 +190,7 @@ DingTalkSink<String> sink = DingTalkSink.<String>builder()
         .setMessageType(MessageType.TEXT)
         .build();
 
-stream.addSink(sink);
+stream.sinkTo(sink);
 ```
 
 ### 配置选项

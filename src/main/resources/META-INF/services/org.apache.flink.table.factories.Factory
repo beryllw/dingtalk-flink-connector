@@ -1,1 +1,1 @@
-com.example.flink.connector.dingtalk.table.DingTalkDynamicTableFactory
+io.github.beryllw.dingtalk.connector.table.DingTalkDynamicTableFactory
