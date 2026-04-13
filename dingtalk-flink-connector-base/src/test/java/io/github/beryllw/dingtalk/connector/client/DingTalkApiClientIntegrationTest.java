@@ -62,7 +62,7 @@ public class DingTalkApiClientIntegrationTest {
             String payload = builder.buildMessage(fields);
             String response = client.send(payload);
             System.out.println("Text message response: " + response);
-            assertTrue(response.contains("\"errcode\":0") || response.contains("\"errmsg\":\"ok\""),
+            assertTrue(response.contains("processQueryKey") || response.contains("\"errcode\":0"),
                     "Response should indicate success: " + response);
         } finally {
             client.close();
@@ -82,7 +82,7 @@ public class DingTalkApiClientIntegrationTest {
             String payload = builder.buildMessage(fields);
             String response = client.send(payload);
             System.out.println("Markdown message response: " + response);
-            assertTrue(response.contains("\"errcode\":0") || response.contains("\"errmsg\":\"ok\""),
+            assertTrue(response.contains("processQueryKey") || response.contains("\"errcode\":0"),
                     "Response should indicate success: " + response);
         } finally {
             client.close();
@@ -104,7 +104,7 @@ public class DingTalkApiClientIntegrationTest {
             String payload = builder.buildMessage(fields);
             String response = client.send(payload);
             System.out.println("ActionCard message response: " + response);
-            assertTrue(response.contains("\"errcode\":0") || response.contains("\"errmsg\":\"ok\""),
+            assertTrue(response.contains("processQueryKey") || response.contains("\"errcode\":0"),
                     "Response should indicate success: " + response);
         } finally {
             client.close();
@@ -126,7 +126,7 @@ public class DingTalkApiClientIntegrationTest {
             String payload = builder.buildMessage(fields);
             String response = client.send(payload);
             System.out.println("Link message response: " + response);
-            assertTrue(response.contains("\"errcode\":0") || response.contains("\"errmsg\":\"ok\""),
+            assertTrue(response.contains("processQueryKey") || response.contains("\"errcode\":0"),
                     "Response should indicate success: " + response);
         } finally {
             client.close();
@@ -146,7 +146,7 @@ public class DingTalkApiClientIntegrationTest {
                 String payload = builder.buildMessage(fields);
                 String response = client.send(payload);
                 System.out.println("Message " + (i + 1) + " response: " + response);
-                assertTrue(response.contains("\"errcode\":0") || response.contains("\"errmsg\":\"ok\""),
+                assertTrue(response.contains("processQueryKey") || response.contains("\"errcode\":0"),
                         "Message " + (i + 1) + " should succeed: " + response);
             }
         } finally {

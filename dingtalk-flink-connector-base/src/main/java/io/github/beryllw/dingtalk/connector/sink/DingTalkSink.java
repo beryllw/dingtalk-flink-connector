@@ -69,10 +69,31 @@ public class DingTalkSink<InputT>
         this.options = options;
     }
 
+    /**
+     * Bridge for Flink 1.x which requires {@code Sink.InitContext}.
+     * In Flink 1.20, {@code WriterInitContext extends Sink.InitContext},
+     * so the cast is safe. In Flink 2.x this method is dead code
+     * (the framework calls {@link #createWriter(WriterInitContext)} directly).
+     */
+    @SuppressWarnings("deprecation")
+    @Override
+    public StatefulSinkWriter<InputT, BufferedRequestState<String>> createWriter(
+            Sink.InitContext context) throws IOException {
+        return restoreWriter((WriterInitContext) context, Collections.emptyList());
+    }
+
     @Override
     public StatefulSinkWriter<InputT, BufferedRequestState<String>> createWriter(
             WriterInitContext context) throws IOException {
         return restoreWriter(context, Collections.emptyList());
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public StatefulSinkWriter<InputT, BufferedRequestState<String>> restoreWriter(
+            Sink.InitContext context,
+            Collection<BufferedRequestState<String>> recoveredState) throws IOException {
+        return restoreWriter((WriterInitContext) context, recoveredState);
     }
 
     @Override
