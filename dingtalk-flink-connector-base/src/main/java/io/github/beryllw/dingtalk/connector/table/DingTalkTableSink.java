@@ -179,18 +179,31 @@ public class DingTalkTableSink extends AsyncDynamicTableSink<String>
             // Build field map directly from RowData instead of parsing serializer output
             Map<String, String> fields = new HashMap<>();
             int arity = element.getArity();
+            String userIdField = options.getUserIdField();
+            String dynamicUserId = null;
+
             for (int i = 0; i < arity; i++) {
                 String name = fieldNames != null && i < fieldNames.length ? fieldNames[i] : "field" + i;
                 if (element.isNullAt(i)) {
                     fields.put(name, "");
                 } else {
-                    fields.put(name, element.getString(i).toString());
+                    String value = element.getString(i).toString();
+                    fields.put(name, value);
+                    // Extract dynamic userId from the designated field
+                    if (name.equals(userIdField)) {
+                        dynamicUserId = value;
+                    }
                 }
+            }
+
+            // Remove the userId field from message content fields
+            if (userIdField != null && !userIdField.isEmpty()) {
+                fields.remove(userIdField);
             }
 
             io.github.beryllw.dingtalk.connector.client.DingTalkMessageBuilder messageBuilder =
                     new io.github.beryllw.dingtalk.connector.client.DingTalkMessageBuilder(options);
-            return messageBuilder.buildMessage(fields);
+            return messageBuilder.buildMessage(fields, dynamicUserId);
         }
     }
 

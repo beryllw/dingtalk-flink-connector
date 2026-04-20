@@ -133,4 +133,65 @@ public class DingTalkMessageBuilderTest {
 
         assertTrue(result.contains("\"content\":\"Fallback content\""));
     }
+
+    @Test
+    public void testBuildMessageWithDynamicUserId() {
+        options.setMessageType(MessageType.TEXT);
+        DingTalkMessageBuilder builder = new DingTalkMessageBuilder(options);
+
+        Map<String, String> fields = new HashMap<>();
+        fields.put("content", "Hello Dynamic User");
+
+        String result = builder.buildMessage(fields, "dynamicUser001");
+
+        assertNotNull(result);
+        assertTrue(result.contains("\"msgtype\":\"text\""));
+        assertTrue(result.contains("\"content\":\"Hello Dynamic User\""));
+        assertTrue(result.contains("\"" + DingTalkMessageBuilder.DYNAMIC_USER_IDS_KEY + "\":\"dynamicUser001\""));
+    }
+
+    @Test
+    public void testBuildMessageWithMultipleDynamicUserIds() {
+        options.setMessageType(MessageType.MARKDOWN);
+        DingTalkMessageBuilder builder = new DingTalkMessageBuilder(options);
+
+        Map<String, String> fields = new HashMap<>();
+        fields.put("title", "Alert");
+        fields.put("content", "CPU High");
+
+        String result = builder.buildMessage(fields, "user001,user002");
+
+        assertNotNull(result);
+        assertTrue(result.contains("\"msgtype\":\"markdown\""));
+        assertTrue(result.contains("\"" + DingTalkMessageBuilder.DYNAMIC_USER_IDS_KEY + "\":\"user001,user002\""));
+    }
+
+    @Test
+    public void testBuildMessageWithNullDynamicUserIdDoesNotEmbed() {
+        options.setMessageType(MessageType.TEXT);
+        DingTalkMessageBuilder builder = new DingTalkMessageBuilder(options);
+
+        Map<String, String> fields = new HashMap<>();
+        fields.put("content", "No dynamic user");
+
+        String result = builder.buildMessage(fields, null);
+
+        assertNotNull(result);
+        assertTrue(result.contains("\"msgtype\":\"text\""));
+        assertFalse(result.contains(DingTalkMessageBuilder.DYNAMIC_USER_IDS_KEY));
+    }
+
+    @Test
+    public void testBuildMessageWithEmptyDynamicUserIdDoesNotEmbed() {
+        options.setMessageType(MessageType.TEXT);
+        DingTalkMessageBuilder builder = new DingTalkMessageBuilder(options);
+
+        Map<String, String> fields = new HashMap<>();
+        fields.put("content", "Empty dynamic user");
+
+        String result = builder.buildMessage(fields, "");
+
+        assertNotNull(result);
+        assertFalse(result.contains(DingTalkMessageBuilder.DYNAMIC_USER_IDS_KEY));
+    }
 }

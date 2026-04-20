@@ -32,21 +32,54 @@ public class DingTalkMessageBuilder implements Serializable {
     }
 
     /**
+     * Internal key used to embed dynamic userIds within the payload JSON.
+     * The DingTalkApiClient will extract this before sending.
+     */
+    public static final String DYNAMIC_USER_IDS_KEY = "__userIds__";
+
+    /**
      * Build a message payload from field values.
      */
     public String buildMessage(Map<String, String> fields) {
+        return buildMessage(fields, null);
+    }
+
+    /**
+     * Build a message payload from field values with an optional dynamic userId.
+     * When dynamicUserId is provided, it will be embedded into the payload for
+     * the API client to extract and use as the target recipient.
+     */
+    public String buildMessage(Map<String, String> fields, String dynamicUserId) {
+        String message;
         switch (options.getMessageType()) {
             case TEXT:
-                return buildText(fields);
+                message = buildText(fields);
+                break;
             case MARKDOWN:
-                return buildMarkdown(fields);
+                message = buildMarkdown(fields);
+                break;
             case ACTION_CARD:
-                return buildActionCard(fields);
+                message = buildActionCard(fields);
+                break;
             case LINK:
-                return buildLink(fields);
+                message = buildLink(fields);
+                break;
             default:
                 throw new IllegalArgumentException("Unsupported message type: " + options.getMessageType());
         }
+
+        // Embed dynamic userId into the payload if provided
+        if (dynamicUserId != null && !dynamicUserId.isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.JsonNode root = mapper().readTree(message);
+                ((ObjectNode) root).put(DYNAMIC_USER_IDS_KEY, dynamicUserId);
+                return mapper().writeValueAsString(root);
+            } catch (Exception e) {
+                // Fall back to original message if embedding fails
+                return message;
+            }
+        }
+        return message;
     }
 
     private String buildText(Map<String, String> fields) {

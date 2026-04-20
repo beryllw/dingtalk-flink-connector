@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -64,13 +65,19 @@ public class DingTalkApiClient implements DingTalkClient {
 
         ObjectMapper mapper = new ObjectMapper();
         String msgKey = extractMsgKey(payload);
-        String msgParam = extractMsgParam(payload);
+
+        // Extract dynamic userIds from payload if present
+        List<String> targetUserIds = extractDynamicUserIds(payload, mapper);
+        // Clean payload by removing the dynamic userId field before extracting msgParam
+        String cleanPayload = removeDynamicUserIds(payload, mapper);
+
+        String msgParam = extractMsgParam(cleanPayload);
 
         ObjectNode body = mapper.createObjectNode();
         body.put("robotCode", robotCode);
         ArrayNode uidArray = body.putArray("userIds");
-        for (String uid : userIds) {
-            uidArray.add(uid);
+        for (String uid : targetUserIds) {
+            uidArray.add(uid.trim());
         }
         body.put("msgKey", msgKey);
         body.put("msgParam", msgParam);
@@ -80,6 +87,47 @@ public class DingTalkApiClient implements DingTalkClient {
         LOG.debug("DingTalk API request: {}", bodyStr);
 
         return doPost(ROBOT_SEND_URL, bodyStr, accessToken);
+    }
+
+    /**
+     * Extract dynamic userIds from payload. Falls back to static userIds from config.
+     */
+    private List<String> extractDynamicUserIds(String payload, ObjectMapper mapper) {
+        try {
+            JsonNode root = mapper.readTree(payload);
+            JsonNode dynamicNode = root.path(DingTalkMessageBuilder.DYNAMIC_USER_IDS_KEY);
+            if (!dynamicNode.isMissingNode() && !dynamicNode.isNull()) {
+                String dynamicValue = dynamicNode.asText();
+                if (dynamicValue != null && !dynamicValue.isEmpty()) {
+                    return java.util.Arrays.asList(dynamicValue.split(","));
+                }
+            }
+        } catch (Exception e) {
+            LOG.debug("Failed to extract dynamic userIds from payload, using static config", e);
+        }
+        // Fall back to static userIds
+        if (userIds == null || userIds.isEmpty()) {
+            throw new IllegalStateException(
+                    "No userIds available: neither dynamic userId in data nor static 'user-ids' configured");
+        }
+        return userIds;
+    }
+
+    /**
+     * Remove the dynamic userId field from payload to get clean message content.
+     */
+    private String removeDynamicUserIds(String payload, ObjectMapper mapper) {
+        try {
+            JsonNode root = mapper.readTree(payload);
+            if (root.has(DingTalkMessageBuilder.DYNAMIC_USER_IDS_KEY)) {
+                ((com.fasterxml.jackson.databind.node.ObjectNode) root)
+                        .remove(DingTalkMessageBuilder.DYNAMIC_USER_IDS_KEY);
+                return mapper.writeValueAsString(root);
+            }
+        } catch (Exception e) {
+            LOG.debug("Failed to remove dynamic userIds field from payload", e);
+        }
+        return payload;
     }
 
     @Override

@@ -95,6 +95,17 @@ public class DingTalkDynamicTableFactory implements DynamicTableSinkFactory {
                     "Either 'webhook' or both 'app-key' and 'app-secret' must be specified");
         }
 
+        // For API mode, at least one of user-ids or user-id-field must be configured
+        String sendMode = config.get(SEND_MODE);
+        if ("api".equalsIgnoreCase(sendMode)) {
+            String userIds = config.get(USER_IDS);
+            String userIdField = config.get(USER_ID_FIELD);
+            if ((userIds == null || userIds.isEmpty()) && (userIdField == null || userIdField.isEmpty())) {
+                throw new IllegalArgumentException(
+                        "For API mode, at least one of 'user-ids' or 'user-id-field' must be specified");
+            }
+        }
+
         // Build options
         DingTalkSinkOptions options = buildOptions(config);
 
