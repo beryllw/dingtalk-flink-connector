@@ -22,17 +22,17 @@ import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.APP_KEY
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.APP_SECRET;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.AT_ALL;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.AT_MOBILES;
-import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.FLUSH_BUFFER_SIZE;
-import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.FLUSH_BUFFER_TIMEOUT;
-import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.MAX_BATCH_SIZE;
-import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.MAX_BUFFERED_REQUESTS;
-import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.MAX_IN_FLIGHT_REQUESTS;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.MAX_RETRIES;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.MESSAGE_TYPE;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.RETRY_DELAY_MS;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.ROBOT_CODE;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.SECRET;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.SEND_MODE;
+import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.SINK_BATCH_MAX_SIZE;
+import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.SINK_BUFFER_FLUSH_INTERVAL;
+import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.SINK_BUFFER_MAX_SIZE_IN_BYTES;
+import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.SINK_MAX_BUFFERED_REQUESTS;
+import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.SINK_MAX_IN_FLIGHT_REQUESTS;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.USER_ID_FIELD;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.USER_IDS;
 import static io.github.beryllw.dingtalk.connector.table.DingTalkOptions.WEBHOOK;
@@ -72,11 +72,12 @@ public class DingTalkDynamicTableFactory implements DynamicTableSinkFactory {
         options.add(USER_ID_FIELD);
         options.add(MAX_RETRIES);
         options.add(RETRY_DELAY_MS);
-        options.add(MAX_BATCH_SIZE);
-        options.add(FLUSH_BUFFER_SIZE);
-        options.add(MAX_BUFFERED_REQUESTS);
-        options.add(FLUSH_BUFFER_TIMEOUT);
-        options.add(MAX_IN_FLIGHT_REQUESTS);
+        // Async sink parameters
+        options.add(SINK_BATCH_MAX_SIZE);
+        options.add(SINK_MAX_IN_FLIGHT_REQUESTS);
+        options.add(SINK_MAX_BUFFERED_REQUESTS);
+        options.add(SINK_BUFFER_FLUSH_INTERVAL);
+        options.add(SINK_BUFFER_MAX_SIZE_IN_BYTES);
         return options;
     }
 
@@ -119,14 +120,14 @@ public class DingTalkDynamicTableFactory implements DynamicTableSinkFactory {
 
         return new DingTalkTableSink(
                 options,
+                config.get(SINK_BATCH_MAX_SIZE),
+                config.get(SINK_MAX_IN_FLIGHT_REQUESTS),
+                config.get(SINK_MAX_BUFFERED_REQUESTS),
+                config.get(SINK_BUFFER_MAX_SIZE_IN_BYTES),
+                config.get(SINK_BUFFER_FLUSH_INTERVAL),
                 physicalDataType,
                 fieldNames,
                 hasFormat ? null : createDefaultSerializer(physicalDataType, fieldNames),
-                config.get(MAX_BATCH_SIZE),
-                config.get(MAX_IN_FLIGHT_REQUESTS),
-                config.get(MAX_BUFFERED_REQUESTS),
-                config.get(FLUSH_BUFFER_SIZE),
-                config.get(FLUSH_BUFFER_TIMEOUT),
                 hasFormat);
     }
 
@@ -147,7 +148,7 @@ public class DingTalkDynamicTableFactory implements DynamicTableSinkFactory {
         }
 
         String messageType = config.get(MESSAGE_TYPE);
-        options.setMessageType(MessageType.valueOf(messageType.toUpperCase().replace("-", "_")));
+        options.setMessageType(MessageType.fromValue(messageType));
 
         String atMobiles = config.get(AT_MOBILES);
         if (atMobiles != null && !atMobiles.isEmpty()) {

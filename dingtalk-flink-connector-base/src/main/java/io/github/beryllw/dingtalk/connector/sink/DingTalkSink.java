@@ -39,10 +39,10 @@ public class DingTalkSink<InputT>
 
     private static final long serialVersionUID = 1L;
 
-    // Default values
-    private static final int DEFAULT_MAX_BATCH_SIZE = 500;
-    private static final int DEFAULT_MAX_IN_FLIGHT_REQUESTS = 50;
-    private static final int DEFAULT_MAX_BUFFERED_REQUESTS = 10_000;
+    // Default values tuned for DingTalk's rate limiting (~20 messages/minute for webhook)
+    private static final int DEFAULT_MAX_BATCH_SIZE = 20;
+    private static final int DEFAULT_MAX_IN_FLIGHT_REQUESTS = 1;
+    private static final int DEFAULT_MAX_BUFFERED_REQUESTS = 100;
     private static final long DEFAULT_MAX_BATCH_SIZE_IN_BYTES = 5 * 1024 * 1024; // 5MB
     private static final long DEFAULT_MAX_TIME_IN_BUFFER_MS = 5000; // 5s
     private static final long DEFAULT_MAX_RECORD_SIZE_IN_BYTES = 1024 * 1024; // 1MB

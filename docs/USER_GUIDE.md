@@ -1,6 +1,6 @@
 # Flink DingTalk Sink Connector - User Manual
 
-**Version:** 1.0.0-SNAPSHOT | **Flink:** 2.2.0 | **Java:** 11+
+**Version:** 1.0.0-SNAPSHOT | **Flink:** 1.20 / 2.2 | **Java:** 11+
 
 [English](USER_GUIDE.md) | [中文](USER_GUIDE_zh.md)
 
@@ -73,34 +73,48 @@ The connector uses Flink's **AsyncSinkBase** for non-blocking batch sending with
 
 ```bash
 git clone <repo-url>
-cd dingding-flink-connector
+cd dingtalk-flink-connector
 mvn clean package -DskipTests
 ```
 
-The shaded JAR will be at `target/dingtalk-flink-connector-1.0.0-SNAPSHOT.jar`.
+The shaded JARs will be at:
+- `dingtalk-flink-connector-1.20/target/dingtalk-flink-connector-1.20-1.0.0-SNAPSHOT.jar` (for Flink 1.20)
+- `dingtalk-flink-connector-2.2/target/dingtalk-flink-connector-2.2-1.0.0-SNAPSHOT.jar` (for Flink 2.2)
 
 ### 3.2 Deploy to Flink Cluster
 
 Copy the JAR to Flink's `lib/` directory:
 
 ```bash
-cp target/dingtalk-flink-connector-1.0.0-SNAPSHOT.jar $FLINK_HOME/lib/
+# For Flink 1.20
+cp dingtalk-flink-connector-1.20/target/dingtalk-flink-connector-1.20-1.0.0-SNAPSHOT.jar $FLINK_HOME/lib/
+
+# For Flink 2.2
+cp dingtalk-flink-connector-2.2/target/dingtalk-flink-connector-2.2-1.0.0-SNAPSHOT.jar $FLINK_HOME/lib/
 ```
 
 Or submit with the job:
 
 ```bash
 flink run -c com.example.YourJob \
-  -C file:///path/to/dingtalk-flink-connector-1.0.0-SNAPSHOT.jar \
+  -C file:///path/to/dingtalk-flink-connector-1.20-1.0.0-SNAPSHOT.jar \
   your-job.jar
 ```
 
 ### 3.3 Maven Dependency
 
 ```xml
+<!-- For Flink 1.20 -->
 <dependency>
     <groupId>io.github.beryllw</groupId>
-    <artifactId>dingtalk-flink-connector</artifactId>
+    <artifactId>dingtalk-flink-connector-1.20</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+</dependency>
+
+<!-- For Flink 2.2 -->
+<dependency>
+    <groupId>io.github.beryllw</groupId>
+    <artifactId>dingtalk-flink-connector-2.2</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -212,10 +226,7 @@ CREATE TABLE dingtalk_sink (
     'at-all' = 'false',
     'at-mobiles' = '13800138000',
     'max-retries' = '3',
-    'retry-delay-ms' = '1000',
-    'sink.batch.max-size' = '1',
-    'sink.flush-buffer.timeout' = '5000',
-    'sink.requests.max-inflight' = '50'
+    'retry-delay-ms' = '1000'
 );
 ```
 
@@ -371,16 +382,17 @@ stream.map(e -> Map.of(
 | `app-secret` | String | API mode | - | Enterprise app AppSecret |
 | `robot-code` | String | API mode | - | Robot code (starts with `ding`) |
 | `user-ids` | String | API mode | - | Comma-separated user IDs |
+| `user-id-field` | String | No | - | Column name for dynamic user ID (API mode) |
 | `message-type` | String | No | `text` | `text`, `markdown`, `actionCard`, `link` |
 | `at-mobiles` | String | No | - | Comma-separated mobile numbers to @ |
 | `at-all` | Boolean | No | `false` | Whether to @ everyone |
 | `max-retries` | Int | No | `3` | Max retries on failure |
 | `retry-delay-ms` | Long | No | `1000` | Base retry delay in ms |
-| `sink.batch.max-size` | Int | No | `500` | Max messages per batch |
-| `sink.flush-buffer.size` | Long | No | `5242880` | Max buffer size in bytes (5MB) |
-| `sink.requests.max-buffered` | Int | No | `10000` | Max buffered requests |
-| `sink.flush-buffer.timeout` | Long | No | `5000` | Flush timeout in ms |
-| `sink.requests.max-inflight` | Int | No | `50` | Max concurrent HTTP requests |
+| `sink.batch.max-size` | Int | No | `20` | Max records per batch (tuned for DingTalk ~20 msg/min) |
+| `sink.max-in-flight-requests` | Int | No | `1` | Max concurrent async requests |
+| `sink.max-buffered-requests` | Int | No | `100` | Max buffered requests before back-pressure |
+| `sink.buffer.flush-interval` | Long | No | `5000` | Buffer flush interval in ms |
+| `sink.buffer.max-size-in-bytes` | Long | No | `5242880` | Max buffer size in bytes (5 MB) |
 
 ### Programmatic Options (DingTalkSinkOptions)
 
@@ -393,6 +405,7 @@ stream.map(e -> Map.of(
 | `setAppSecret(String)` | String | Set AppSecret for API mode |
 | `setRobotCode(String)` | String | Set robot code for API mode |
 | `setUserIds(List<String>)` | List | Set target user IDs |
+| `setUserIdField(String)` | String | Set column name for dynamic user ID (API mode) |
 | `setMessageType(MessageType)` | Enum | `TEXT`, `MARKDOWN`, `ACTION_CARD`, `LINK` |
 | `setAtMobiles(List<String>)` | List | Mobile numbers to @ |
 | `setAtAll(boolean)` | boolean | @ everyone |
@@ -510,6 +523,6 @@ log4j.logger.io.github.beryllw.dingtalk.connector=DEBUG
 ### Performance Tips
 
 - Set `sink.batch.max-size=1` for low-latency (immediate delivery)
-- Increase `sink.requests.max-inflight` for high-throughput scenarios
+- Increase `sink.max-in-flight-requests` for high-throughput scenarios
 - Use Enterprise API mode for higher throughput (no 20 msg/min limit)
 - For webhook mode, batch messages at the Flink level before sending

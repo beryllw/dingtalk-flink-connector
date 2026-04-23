@@ -22,7 +22,7 @@
 
 ## Features
 
-- **SinkV2 API** - Compatible with Flink 2.2.0+
+- **SinkV2 API** - Compatible with Flink 1.20+ / 2.2+
 - **Dual Mode** - Webhook or Enterprise API
 - **SQL Support** - `CREATE TABLE ... WITH ('connector' = 'dingtalk')`
 - **Message Types** - text, markdown, actionCard, link
@@ -99,13 +99,17 @@ stream.sinkTo(sink);
 | `app-secret` | String | Yes (API) | Enterprise app AppSecret |
 | `robot-code` | String | Yes (API) | Robot code from app settings |
 | `user-ids` | String | Yes (API) | Comma-separated user IDs |
+| `user-id-field` | String | No | Column name for dynamic user ID (API mode) |
 | `message-type` | String | No | `text`, `markdown`, `actionCard`, `link`, default `text` |
 | `at-mobiles` | String | No | Comma-separated mobile numbers to @ |
 | `at-all` | Boolean | No | @ everyone, default `false` |
 | `max-retries` | Int | No | Max retries, default `3` |
 | `retry-delay-ms` | Long | No | Retry delay in ms, default `1000` |
-| `sink.batch.max-size` | Int | No | Max batch size, default `500` |
-| `sink.flush-buffer.timeout` | Long | No | Flush timeout in ms, default `5000` |
+| `sink.batch.max-size` | Int | No | Max records per batch, default `20` |
+| `sink.max-in-flight-requests` | Int | No | Max concurrent async requests, default `1` |
+| `sink.max-buffered-requests` | Int | No | Max buffered requests, default `100` |
+| `sink.buffer.flush-interval` | Long | No | Buffer flush interval in ms, default `5000` |
+| `sink.buffer.max-size-in-bytes` | Long | No | Max buffer size in bytes, default `5242880` (5MB) |
 
 ## Getting Credentials
 
@@ -135,4 +139,4 @@ mvn test -Dtest=DingTalkApiClientIntegrationTest
 
 ## User Guide
 
-For detailed usage instructions, see the [User Guide](USER_GUIDE.md).
+For detailed usage instructions, see the [User Guide](docs/USER_GUIDE.md).

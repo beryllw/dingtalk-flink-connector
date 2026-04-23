@@ -1,8 +1,6 @@
 package io.github.beryllw.dingtalk.connector.table;
 
 import io.github.beryllw.dingtalk.connector.config.DingTalkSinkOptions;
-import io.github.beryllw.dingtalk.connector.config.MessageType;
-import io.github.beryllw.dingtalk.connector.config.SendMode;
 import io.github.beryllw.dingtalk.connector.sink.DingTalkSink;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.connector.base.table.sink.AsyncDynamicTableSink;
@@ -23,6 +21,10 @@ import java.util.Map;
 
 /**
  * Table sink that converts {@link RowData} to DingTalk messages.
+ *
+ * <p>Extends {@link AsyncDynamicTableSink} to support async sink parameter
+ * configuration via SQL WITH clause. Default values are tuned for DingTalk's
+ * rate limiting characteristics (~20 messages/minute).
  */
 public class DingTalkTableSink extends AsyncDynamicTableSink<String>
         implements SupportsWritingMetadata {
@@ -39,16 +41,17 @@ public class DingTalkTableSink extends AsyncDynamicTableSink<String>
 
     public DingTalkTableSink(
             DingTalkSinkOptions options,
+            Integer maxBatchSize,
+            Integer maxInFlightRequests,
+            Integer maxBufferedRequests,
+            Long maxBufferSizeInBytes,
+            Long maxTimeInBufferMS,
             DataType physicalDataType,
             String[] fieldNames,
             @Nullable SerializationSchema<RowData> defaultSerializationSchema,
-            @Nullable Integer maxBatchSize,
-            @Nullable Integer maxInFlightRequests,
-            @Nullable Integer maxBufferedRequests,
-            @Nullable Long maxBufferSizeInBytes,
-            @Nullable Long maxTimeInBufferMS,
             boolean useExternalFormat) {
-        super(maxBatchSize, maxInFlightRequests, maxBufferedRequests, maxBufferSizeInBytes, maxTimeInBufferMS);
+        super(maxBatchSize, maxInFlightRequests, maxBufferedRequests,
+                maxBufferSizeInBytes, maxTimeInBufferMS);
         this.options = options;
         this.physicalDataType = physicalDataType;
         this.fieldNames = fieldNames;
@@ -58,18 +61,19 @@ public class DingTalkTableSink extends AsyncDynamicTableSink<String>
 
     private DingTalkTableSink(
             DingTalkSinkOptions options,
+            Integer maxBatchSize,
+            Integer maxInFlightRequests,
+            Integer maxBufferedRequests,
+            Long maxBufferSizeInBytes,
+            Long maxTimeInBufferMS,
             DataType physicalDataType,
             String[] fieldNames,
             List<String> metadataKeys,
             DataType consumedDataType,
             @Nullable SerializationSchema<RowData> defaultSerializationSchema,
-            @Nullable Integer maxBatchSize,
-            @Nullable Integer maxInFlightRequests,
-            @Nullable Integer maxBufferedRequests,
-            @Nullable Long maxBufferSizeInBytes,
-            @Nullable Long maxTimeInBufferMS,
             boolean useExternalFormat) {
-        super(maxBatchSize, maxInFlightRequests, maxBufferedRequests, maxBufferSizeInBytes, maxTimeInBufferMS);
+        super(maxBatchSize, maxInFlightRequests, maxBufferedRequests,
+                maxBufferSizeInBytes, maxTimeInBufferMS);
         this.options = options;
         this.physicalDataType = physicalDataType;
         this.fieldNames = fieldNames;
@@ -93,12 +97,14 @@ public class DingTalkTableSink extends AsyncDynamicTableSink<String>
     @Override
     public SinkRuntimeProvider getSinkRuntimeProvider(Context context) {
         SerializationSchema<RowData> serializer = getSerializer(context);
-        DingTalkSink<RowData> sink = DingTalkSink.<RowData>builder()
+        DingTalkSink.DingTalkSinkBuilder<RowData> builder = DingTalkSink.<RowData>builder()
                 .setOptions(options)
-                .setElementConverter(createRowDataElementConverter(serializer))
-                .build();
+                .setElementConverter(createRowDataElementConverter(serializer));
 
-        return SinkV2Provider.of(sink);
+        // Apply async sink parameters from SQL WITH clause to the builder
+        addAsyncOptionsToSinkBuilder(builder);
+
+        return SinkV2Provider.of(builder.build());
     }
 
     private SerializationSchema<RowData> getSerializer(Context context) {
@@ -117,16 +123,16 @@ public class DingTalkTableSink extends AsyncDynamicTableSink<String>
     public DynamicTableSink copy() {
         return new DingTalkTableSink(
                 options,
-                physicalDataType,
-                fieldNames,
-                metadataKeys,
-                consumedDataType,
-                defaultSerializationSchema,
                 maxBatchSize,
                 maxInFlightRequests,
                 maxBufferedRequests,
                 maxBufferSizeInBytes,
                 maxTimeInBufferMS,
+                physicalDataType,
+                fieldNames,
+                metadataKeys,
+                consumedDataType,
+                defaultSerializationSchema,
                 useExternalFormat);
     }
 

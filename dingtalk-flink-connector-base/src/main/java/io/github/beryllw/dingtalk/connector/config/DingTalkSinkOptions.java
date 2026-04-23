@@ -28,7 +28,6 @@ public class DingTalkSinkOptions implements Serializable {
     private String userIdField;
     private int maxRetries = 3;
     private long retryDelayMs = 1000;
-    private int batchSize = 1;
     private int connectionTimeoutMs = 5000;
 
     public DingTalkSinkOptions() {
@@ -144,14 +143,6 @@ public class DingTalkSinkOptions implements Serializable {
         this.retryDelayMs = retryDelayMs;
     }
 
-    public int getBatchSize() {
-        return batchSize;
-    }
-
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
-    }
-
     public int getConnectionTimeoutMs() {
         return connectionTimeoutMs;
     }
@@ -165,7 +156,6 @@ public class DingTalkSinkOptions implements Serializable {
         return "DingTalkSinkOptions{" +
                 "sendMode=" + sendMode +
                 ", messageType=" + messageType +
-                ", batchSize=" + batchSize +
                 ", maxRetries=" + maxRetries +
                 '}';
     }

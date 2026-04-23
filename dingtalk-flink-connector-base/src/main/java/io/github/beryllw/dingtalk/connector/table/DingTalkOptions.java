@@ -42,7 +42,7 @@ public final class DingTalkOptions {
 
         String messageType = config.get(MESSAGE_TYPE);
         if (messageType != null) {
-            sinkOptions.setMessageType(MessageType.valueOf(messageType.toUpperCase()));
+            sinkOptions.setMessageType(MessageType.fromValue(messageType));
         }
 
         String atMobiles = config.get(AT_MOBILES);
@@ -51,6 +51,7 @@ public final class DingTalkOptions {
         }
 
         sinkOptions.setAtAll(config.get(AT_ALL));
+        sinkOptions.setUserIdField(config.get(USER_ID_FIELD));
         sinkOptions.setMaxRetries(config.get(MAX_RETRIES));
         sinkOptions.setRetryDelayMs(config.get(RETRY_DELAY_MS));
 
@@ -135,34 +136,37 @@ public final class DingTalkOptions {
             .defaultValue(1000L)
             .withDescription("Retry delay in milliseconds");
 
-    // Async sink options (inherited from flink-connector-base)
-    public static final ConfigOption<Integer> MAX_BATCH_SIZE = ConfigOptions
+    // ---- Async sink parameters (DingTalk-tuned defaults) ----
+
+    public static final ConfigOption<Integer> SINK_BATCH_MAX_SIZE = ConfigOptions
             .key("sink.batch.max-size")
             .intType()
-            .defaultValue(500)
-            .withDescription("Maximum number of elements per batch");
+            .defaultValue(20)
+            .withDescription("Maximum number of records per batch. "
+                    + "Default 20, matching DingTalk's ~20 messages/minute rate limit.");
 
-    public static final ConfigOption<Long> FLUSH_BUFFER_SIZE = ConfigOptions
-            .key("sink.flush-buffer.size")
-            .longType()
-            .defaultValue(5 * 1024 * 1024L)
-            .withDescription("Maximum buffer size in bytes before flushing");
-
-    public static final ConfigOption<Integer> MAX_BUFFERED_REQUESTS = ConfigOptions
-            .key("sink.requests.max-buffered")
+    public static final ConfigOption<Integer> SINK_MAX_IN_FLIGHT_REQUESTS = ConfigOptions
+            .key("sink.max-in-flight-requests")
             .intType()
-            .defaultValue(10000)
-            .withDescription("Maximum number of buffered requests");
+            .defaultValue(1)
+            .withDescription("Maximum number of in-flight async requests. "
+                    + "Default 1, to serialize requests and avoid DingTalk rate limiting.");
 
-    public static final ConfigOption<Long> FLUSH_BUFFER_TIMEOUT = ConfigOptions
-            .key("sink.flush-buffer.timeout")
+    public static final ConfigOption<Integer> SINK_MAX_BUFFERED_REQUESTS = ConfigOptions
+            .key("sink.max-buffered-requests")
+            .intType()
+            .defaultValue(100)
+            .withDescription("Maximum number of buffered requests before back-pressure. Default 100.");
+
+    public static final ConfigOption<Long> SINK_BUFFER_FLUSH_INTERVAL = ConfigOptions
+            .key("sink.buffer.flush-interval")
             .longType()
             .defaultValue(5000L)
-            .withDescription("Maximum time in buffer before flushing (ms)");
+            .withDescription("Maximum time in milliseconds a record stays in the buffer before flushing. Default 5000.");
 
-    public static final ConfigOption<Integer> MAX_IN_FLIGHT_REQUESTS = ConfigOptions
-            .key("sink.requests.max-inflight")
-            .intType()
-            .defaultValue(50)
-            .withDescription("Maximum concurrent in-flight requests");
+    public static final ConfigOption<Long> SINK_BUFFER_MAX_SIZE_IN_BYTES = ConfigOptions
+            .key("sink.buffer.max-size-in-bytes")
+            .longType()
+            .defaultValue(5 * 1024 * 1024L)
+            .withDescription("Maximum size of the buffer in bytes. Default 5 MB.");
 }
