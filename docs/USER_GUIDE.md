@@ -69,39 +69,58 @@ The connector uses Flink's **AsyncSinkBase** for non-blocking batch sending with
 
 ## 3. Installation
 
-### 3.1 Build from Source
+### 3.1 Download from GitHub Releases
+
+Go to [GitHub Releases](https://github.com/beryllw/dingtalk-flink-connector/releases) and download the shaded JAR for your Flink version:
+
+| File | Flink Version |
+|------|---------------|
+| `dingtalk-flink-connector-1.20-<version>.jar` | Flink 1.20.x |
+| `dingtalk-flink-connector-2.2-<version>.jar` | Flink 2.2.x |
+
+### 3.2 Build from Source
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/beryllw/dingtalk-flink-connector.git
 cd dingtalk-flink-connector
 mvn clean package -DskipTests
 ```
 
 The shaded JARs will be at:
-- `dingtalk-flink-connector-1.20/target/dingtalk-flink-connector-1.20-1.0.0-SNAPSHOT.jar` (for Flink 1.20)
-- `dingtalk-flink-connector-2.2/target/dingtalk-flink-connector-2.2-1.0.0-SNAPSHOT.jar` (for Flink 2.2)
+- `dingtalk-flink-connector-1.20/target/dingtalk-flink-connector-1.20-<version>.jar` (for Flink 1.20)
+- `dingtalk-flink-connector-2.2/target/dingtalk-flink-connector-2.2-<version>.jar` (for Flink 2.2)
 
-### 3.2 Deploy to Flink Cluster
+### 3.3 Deploy to Flink Cluster
 
 Copy the JAR to Flink's `lib/` directory:
 
 ```bash
 # For Flink 1.20
-cp dingtalk-flink-connector-1.20/target/dingtalk-flink-connector-1.20-1.0.0-SNAPSHOT.jar $FLINK_HOME/lib/
+cp dingtalk-flink-connector-1.20-<version>.jar $FLINK_HOME/lib/
 
 # For Flink 2.2
-cp dingtalk-flink-connector-2.2/target/dingtalk-flink-connector-2.2-1.0.0-SNAPSHOT.jar $FLINK_HOME/lib/
+cp dingtalk-flink-connector-2.2-<version>.jar $FLINK_HOME/lib/
 ```
 
 Or submit with the job:
 
 ```bash
 flink run -c com.example.YourJob \
-  -C file:///path/to/dingtalk-flink-connector-1.20-1.0.0-SNAPSHOT.jar \
+  -C file:///path/to/dingtalk-flink-connector-1.20-<version>.jar \
   your-job.jar
 ```
 
-### 3.3 Maven Dependency
+### 3.4 Maven Dependency (Local Install)
+
+If you need to reference the connector as a Maven dependency in your project (e.g., for DataStream API development), first install it to your local Maven repository:
+
+```bash
+git clone https://github.com/beryllw/dingtalk-flink-connector.git
+cd dingtalk-flink-connector
+mvn clean install -DskipTests
+```
+
+Then add the dependency to your project's `pom.xml`:
 
 ```xml
 <!-- For Flink 1.20 -->
@@ -118,6 +137,8 @@ flink run -c com.example.YourJob \
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
+
+> **Note:** The connector is not yet published to Maven Central. You must install it locally before using these coordinates. For Flink SQL usage, the local install is not needed -- just deploy the shaded JAR to the Flink cluster (section 3.3).
 
 ---
 
